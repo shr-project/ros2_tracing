@@ -18,6 +18,7 @@ import os
 from typing import List
 from typing import Optional
 
+import launch.logging
 from launch.action import Action
 from launch.event import Event
 from launch.event_handlers import OnShutdown
@@ -56,6 +57,8 @@ class Trace(Action):
         self.__events_ust = events_ust
         self.__events_kernel = events_kernel
 
+        self.__logger = launch.logging.get_logger(__name__)
+
     def execute(self, context: LaunchContext) -> Optional[List[Action]]:
         # TODO make sure this is done as late as possible
         context.register_event_handler(OnShutdown(on_shutdown=self._destroy))
@@ -63,6 +66,7 @@ class Trace(Action):
         self._setup()
 
     def _setup(self) -> None:
+        self.__logger.debug(f'initializing tracing session at: {self.__path}')
         lttng.lttng_init(
             self.__session_name,
             self.__path,
@@ -70,6 +74,7 @@ class Trace(Action):
             kernel_events=self.__events_kernel)
 
     def _destroy(self, event: Event, context: LaunchContext) -> None:
+        self.__logger.debug(f'finalizing tracing session at: {self.__path}')
         lttng.lttng_fini(self.__session_name)
 
     def __repr__(self):
