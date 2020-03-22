@@ -4,6 +4,10 @@ variables:
   BASE_IMAGE_ID: registry.gitlab.com/micro-ros/ros_tracing/ci_base
   DISTRO: foxy
 
+stages:
+  - check
+  - test
+
 .global_artifacts: &global_artifacts
   artifacts:
     paths:
@@ -19,7 +23,15 @@ before_script:
   - vcs import < instrumented.repos
   - . /root/ws/install/local_setup.sh
 
+check_dco:
+  stage: check
+  image: python:3
+  before_script: []
+  script:
+    - python3 check_dco.py
+
 tracing_enabled:
+  stage: test
   image: $BASE_IMAGE_ID:$DISTRO
   script:
     - lttng --version && apt list lttng-tools liblttng-ust-dev python3-lttng python3-babeltrace
@@ -31,6 +43,7 @@ tracing_enabled:
   <<: *global_artifacts
 
 tracing_disabled:
+  stage: test
   image: $BASE_IMAGE_ID:$DISTRO
   script:
     - colcon build --symlink-install --event-handlers console_cohesion+ --cmake-args " -DTRACETOOLS_DISABLED=ON" --packages-up-to $PACKAGES_LIST
@@ -40,6 +53,7 @@ tracing_disabled:
   <<: *global_artifacts
 
 no_lttng:
+  stage: test
   image: $BASE_IMAGE_ID:$DISTRO-base
   script:
     - colcon build --symlink-install --event-handlers console_cohesion+ --packages-up-to $PACKAGES_LIST
