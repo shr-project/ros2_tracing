@@ -25,7 +25,7 @@ before_script:
 
 check_dco:
   stage: check
-  image: python:3
+  image: $BASE_IMAGE_ID:$DISTRO
   before_script: []
   script:
     - python3 check_dco.py
